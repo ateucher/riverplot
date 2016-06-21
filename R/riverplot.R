@@ -68,7 +68,7 @@ add_mid_points <- function( x, default_style= NULL ) {
         rsize <- rsize + t.size
 
         # rewire the connection to the new node
-        x$edges$N2[ cur_e ] <- newnode 
+        x$edges$N2[ cur_e ] <- newnode
       }
 
       # we need to calculate the node's edge colors. If there are multiple
@@ -77,8 +77,8 @@ add_mid_points <- function( x, default_style= NULL ) {
       if( length( todo ) > 1 ) {
         x$styles <- copyattr( x$styles, l1, newnode, "col" )
         dmsgf( "node %s: col %s", newnode, getattr( x$styles, newnode, "col" ) )
-       #x$styles[[ newnode ]]$lcol <- 
-       #  x$styles[[ newnode ]]$rcol <- 
+       #x$styles[[ newnode ]]$lcol <-
+       #  x$styles[[ newnode ]]$rcol <-
        #  x$styles[[ l1 ]]$lcol
       } else {
         dp <- p1 - p + 1
@@ -87,7 +87,7 @@ add_mid_points <- function( x, default_style= NULL ) {
         tmp <- colorRampPaletteAlpha( c( col1, col2 ) )( dp )
         dmsgf( "node %s: col %s < %s < %s", newnode, col1, tmp[2], col2 )
         x$styles <- setattr( x$styles, newnode, "col", tmp[2] )
-        #x$styles[[ newnode ]]$lcol <- 
+        #x$styles[[ newnode ]]$lcol <-
           #x$styles[[ newnode ]]$rcol <- tmp[2]
       }
 
@@ -134,9 +134,19 @@ calcsizes2 <- function( x ) {
 }
 
 
-calcpos <- function( x, s, gravity= "top", node_margin= 0.1 ) {
+calcpos <- function( x, s, gravity= "top", node_margin= 0.1, text_adj ) {
 
   pos.list <- sort( unique( x$nodes$x ) )
+
+  if (length(text_adj == 1)) {
+    text_adj <- rep(text_adj, length(pos.list))
+  } else if (length(text_adj) != length(pos.list)) {
+    stop("length of text_adj must be 1 or equal to the number of x positions")
+  }
+
+  if (!all(text_adj >= 0 & text_adj <= 1)) {
+    stop("all text_adj values must be from 0 to 1.")
+  }
 
   nnodes <- names( x )
 
@@ -146,9 +156,9 @@ calcpos <- function( x, s, gravity= "top", node_margin= 0.1 ) {
   dmsg( interstop )
 
   # the matrix will hold graphical coordinates of the positions
-  pos.m <- matrix( 0, nrow= 4, ncol= length( nnodes ) )
+  pos.m <- matrix( 0, nrow= 5, ncol= length( nnodes ) )
   colnames( pos.m ) <- nnodes
-  rownames( pos.m ) <- c( "x", "top", "center", "bottom" )
+  rownames( pos.m ) <- c( "x", "top", "center", "bottom", "text_adj" )
   pos.m[ "x", ]     <- x$nodes$x
   dmsg( x$nodes )
 
@@ -156,7 +166,7 @@ calcpos <- function( x, s, gravity= "top", node_margin= 0.1 ) {
     p <- pos.list[ i ]
 
     cur.y <- 0
-    nn <- nnodes[ x$nodes$x == p ] 
+    nn <- nnodes[ x$nodes$x == p ]
     #printf( "pos: %d", p )
     if( gravity == "top" ) nn <- rev( nn )
     for( n in nn ) {
@@ -178,6 +188,7 @@ calcpos <- function( x, s, gravity= "top", node_margin= 0.1 ) {
         cur.y <- cur.y + s$sizey[ n ] + interstop
       }
       #print( cur.y )
+      pos.m["text_adj", n] <- text_adj[i]
     }
 
   }
@@ -206,7 +217,7 @@ draw.edges <- function( x, pos.m, s, col= "#ffcc33", lty= lty, nsteps= 50, boxw=
   # for each node, we need to to store the position of the current slot, on
   # the right and on the left
 
-  w <- boxw / 2 
+  w <- boxw / 2
   pos.m <- rbind( pos.m, lpos= 0 )
   pos.m <- rbind( pos.m, rpos= 0 )
 
@@ -222,12 +233,12 @@ draw.edges <- function( x, pos.m, s, col= "#ffcc33", lty= lty, nsteps= 50, boxw=
     if( getattr( x$styles, n1, "nodestyle" )  %in% c( "invisible", "point") ) dx1 <- 0
     #if( x$styles[[ n1 ]][[ "nodestyle" ]] %in% c( "invisible", "point" ) ) dx1 <- 0
     col1 <- getattr( x$styles, n1, "col" )
-    #col1 <- x$styles[[n1]][["rcol"]] 
+    #col1 <- x$styles[[n1]][["rcol"]]
 
     dx2 <- w
     if( getattr( x$styles, n2, "nodestyle" )  %in% c( "invisible", "point") ) dx2 <- 0
     #if( x$styles[[ n2 ]][[ "nodestyle" ]] %in% c( "invisible", "point" ) ) dx2 <- 0
-    #col2 <- x$styles[[n2]][["lcol"]] 
+    #col2 <- x$styles[[n2]][["lcol"]]
     col2 <- getattr( x$styles, n2, "col" )
 
     ss <- x$edges$Value[i]
@@ -236,9 +247,9 @@ draw.edges <- function( x, pos.m, s, col= "#ffcc33", lty= lty, nsteps= 50, boxw=
 
     #if( x$styles[[ n1 ]][[ "edgestyle" ]] == 'straight' ) {
     if( getattr( x$styles, id, "edgestyle" ) == "straight" ) {
-      form <- 'line' 
+      form <- 'line'
     } else {
-      form <- 'sin' 
+      form <- 'sin'
     }
 
     # determine the type of edge coloring coloring to use
@@ -252,20 +263,20 @@ draw.edges <- function( x, pos.m, s, col= "#ffcc33", lty= lty, nsteps= 50, boxw=
 
     #print( grad )
 
-    curveseg( pos.m[ "x", n1 ] + dx1, pos.m[ "x", n2 ] - dx2, 
-               pos.m[ "rpos", n1 ],    pos.m[ "lpos", n2 ], 
+    curveseg( pos.m[ "x", n1 ] + dx1, pos.m[ "x", n2 ] - dx2,
+               pos.m[ "rpos", n1 ],    pos.m[ "lpos", n2 ],
                width= ss, grad= grad, col= col,
                lty= lty, nsteps= nsteps, form= form  )
 
     pos.m[ "rpos", n1 ] <- pos.m[ "rpos", n1 ] + ss
     pos.m[ "lpos", n2 ] <- pos.m[ "lpos", n2 ] + ss
-    
+
 
   }
 
 }
 
-draw.nodes <- function( x, pos.m, s, width= 0.2, 
+draw.nodes <- function( x, pos.m, s, width= 0.2,
    lty= 1, col= NULL, srt= NULL, textcol= NULL, boxw= 0.2 ) {
 
   w <- boxw / 2
@@ -274,32 +285,32 @@ draw.nodes <- function( x, pos.m, s, width= 0.2,
     if( getattr( x$styles, n, "nodestyle" ) == "invisible" ) next ;
 
     # if specific values are provided, they override the styles
-    if( is.null( .lty <- lty ) ) .lty <- getattr( x$styles, n, "lty" )  
-    if( is.null( .col <- col ) ) .col <- getattr( x$styles, n, "col" )  
-    if( is.null( .srt <- srt ) ) .srt <- getattr( x$styles, n, "srt" )  
+    if( is.null( .lty <- lty ) ) .lty <- getattr( x$styles, n, "lty" )
+    if( is.null( .col <- col ) ) .col <- getattr( x$styles, n, "col" )
+    if( is.null( .srt <- srt ) ) .srt <- getattr( x$styles, n, "srt" )
     if( is.null( .textcol <- textcol ) ) .textcol <- getattr( x$styles, n, "textcol" )
 
     if( is.null( x$nodes$labels ) || is.na( x$nodes[n,]$labels ) ) lab <- n
     else                                              lab <- x$nodes[n,]$labels
-    
+
     if( getattr( x$styles, n, "nodestyle" ) == "point" ) {
       points( pos.m[ "x", n ], pos.m[ "center", n ], pch= 19, col= col )
     } else {
 
-      rect( 
-        pos.m[ "x", n ] - w, pos.m[ "bottom", n ], 
-        pos.m[ "x", n ] + w, pos.m[ "top", n ], 
+      rect(
+        pos.m[ "x", n ] - w, pos.m[ "bottom", n ],
+        pos.m[ "x", n ] + w, pos.m[ "top", n ],
         lty= .lty, col= .col )
     }
 
-    text( pos.m[ "x", n ], pos.m[ "center", n ], lab, col= .textcol, srt= .srt )
+    text( pos.m[ "x", n ], pos.m[ "center", n ], lab, adj = pos.m["text_adj", n], col= .textcol, srt= .srt )
   }
 }
 
 
 # check whether vertical information is present
 ypos_present <- function( x ) {
-  if( is.null( x$nodes$y ) 
+  if( is.null( x$nodes$y )
     || all( is.na( x$nodes$y ) ) ) return( FALSE )
   yrange <- range( x$nodes$y )
 
@@ -340,7 +351,7 @@ plot.riverplot <- function( x, ...  ) riverplot( x, ... )
 #' the \code{\link{riverplot.example}} to see how it can be created.
 #' Whether or not the list used to plot is exactly of class
 #' \code{riverplot-class} does not matter as long as it has the correct
-#' contents. 
+#' contents.
 #'
 #' Style information which is missing from the riverplot object \code{x} (for example, if the
 #' node style is not specified for each node in the object) is taken from the \code{default.style} parameter.
@@ -376,29 +387,33 @@ plot.riverplot <- function( x, ...  ) riverplot( x, ... )
 #'@param yscale scale the edge width values by multiplying with this
 #'       factor. If \var{yscale} is equal to "auto", scaling is done
 #'       automatically such that the vertical size of the largest node is
-#'       approximately equal to 15% of the range of ypos (if present). 
+#'       approximately equal to 15% of the range of ypos (if present).
 #'       If no \var{node_ypos} is specified in the riverplot object, no scaling is
 #'       done.
 #'       If \var{yscale} is equal to 1, no scaling is done.
+#' @param text_adj a vector of length 1, or the length of the number of x positions,
+#'       to specify the text alignment of labels. Between 0 (left justified), and 1 (right justified).
+#'       Default 0.5 (centered).
 #'@param ... further plotting parameters
 #'@return \code{riverplot} return invisibly a matrix containing the
 #'       actual positions (in user coordinates) of the nodes drawn on the screen.
 #'       Note that it also may contain additional, invisible nodes that have been
 #'       created by the algorithm to better fit on the screen.
 #'@seealso riverplot-styles updateRiverplotStyle minard
-#'@examples 
+#'@examples
 #' x <- riverplot.example()
 #' plot(x)
 #' plot(x, srt=90, lty=1)
 #'@export
-riverplot <- function( x, lty= 0, srt= NULL, 
-                             default_style= NULL, gravity= "top", 
-                             node_margin= 0.1, 
+riverplot <- function( x, lty= 0, srt= NULL,
+                             default_style= NULL, gravity= "top",
+                             node_margin= 0.1,
                              nodewidth= 1.5,
                              plot_area= 0.5,
                              nsteps= 50,
                              add_mid_points= NULL,
-                             yscale= "auto" 
+                             yscale= "auto",
+                             text_adj = 0.5
                              ) {
 
   default_style <- getstyle( NULL, default_style )
@@ -428,8 +443,8 @@ riverplot <- function( x, lty= 0, srt= NULL,
   if( add_mid_points ) x2 <- add_mid_points( x2 )
 
   # update styles
-  for( n in c( x2$nodes$ID, x2$edges$ID ) ) { 
-    x2$styles[[ n ]] <- getstyle( x2$styles[[ n ]], default_style, update.missing= FALSE ) 
+  for( n in c( x2$nodes$ID, x2$edges$ID ) ) {
+    x2$styles[[ n ]] <- getstyle( x2$styles[[ n ]], default_style, update.missing= FALSE )
   }
 
   dmsgc( "Updated styles:\n" )
@@ -446,10 +461,10 @@ riverplot <- function( x, lty= 0, srt= NULL,
   dmsg( sizes )
 
   dmsg( "calculating positions" )
-  positions <- calcpos( x2, sizes, gravity= gravity, node_margin= node_margin )
+  positions <- calcpos( x2, sizes, gravity= gravity, node_margin= node_margin, text_adj = text_adj)
   dmsg( "done" )
   xrange <- range( x2$nodes$x )
-  xlim <- xrange + (xrange[2]-xrange[1]) * c( -0.1, 0.1 ) 
+  xlim <- xrange + (xrange[2]-xrange[1]) * c( -0.1, 0.1 )
   ylim <- range( positions[ c( "bottom", "top" ), ] )
   b <- (ylim[2] - ylim[1]) * (1-plot_area)/plot_area / 2
   ylim <- ylim + c( -b, b )
