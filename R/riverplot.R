@@ -465,6 +465,8 @@ riverplot <- function( x, lty= 0, srt= NULL,
   dmsg( "done" )
   xrange <- range( x2$nodes$x )
   xlim <- xrange + (xrange[2]-xrange[1]) * c( -0.1, 0.1 )
+  xlim[1] <- xlim[1] - max(strwidth(x2$nodes$ID))
+  xlim[2] <- xlim[2] + max(strwidth(x2$nodes$ID))
   ylim <- range( positions[ c( "bottom", "top" ), ] )
   b <- (ylim[2] - ylim[1]) * (1-plot_area)/plot_area / 2
   ylim <- ylim + c( -b, b )
