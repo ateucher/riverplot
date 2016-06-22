@@ -9,7 +9,8 @@
 
 riverplot(x, lty = 0, srt = NULL, default_style = NULL, gravity = "top",
   node_margin = 0.1, nodewidth = 1.5, plot_area = 0.5, nsteps = 50,
-  add_mid_points = NULL, yscale = "auto", text_adj = 0.5)
+  add_mid_points = NULL, yscale = "auto", text_adj = 0.5,
+  textcol = NULL)
 }
 \arguments{
 \item{x}{An object of class riverplot}
@@ -51,6 +52,8 @@ If \var{yscale} is equal to 1, no scaling is done.}
 \item{text_adj}{a vector of length 1, or the length of the number of x positions,
 to specify the text alignment of labels. Between 0 (left justified), and 1 (right justified).
 Default 0.5 (centered).}
+
+\item{textcol}{default colour for node labels.}
 }
 \value{
 \code{riverplot} return invisibly a matrix containing the

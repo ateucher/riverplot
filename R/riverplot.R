@@ -394,6 +394,7 @@ plot.riverplot <- function( x, ...  ) riverplot( x, ... )
 #' @param text_adj a vector of length 1, or the length of the number of x positions,
 #'       to specify the text alignment of labels. Between 0 (left justified), and 1 (right justified).
 #'       Default 0.5 (centered).
+#' @param textcol default colour for node labels.
 #'@param ... further plotting parameters
 #'@return \code{riverplot} return invisibly a matrix containing the
 #'       actual positions (in user coordinates) of the nodes drawn on the screen.
@@ -413,7 +414,8 @@ riverplot <- function( x, lty= 0, srt= NULL,
                              nsteps= 50,
                              add_mid_points= NULL,
                              yscale= "auto",
-                             text_adj = 0.5
+                             text_adj = 0.5,
+                             textcol = NULL
                              ) {
 
   default_style <- getstyle( NULL, default_style )
@@ -484,7 +486,7 @@ riverplot <- function( x, lty= 0, srt= NULL,
   dmsg( "drawing edges" )
   draw.edges( x2, positions, sizes, lty= lty, nsteps= nsteps, boxw= w )
   dmsg( "drawing nodes" )
-  draw.nodes( x2, positions, sizes, srt= srt, boxw= w, lty= lty )
+  draw.nodes( x2, positions, sizes, srt= srt, boxw= w, lty= lty, textcol = textcol)
 
   return( invisible( positions ) )
 }
